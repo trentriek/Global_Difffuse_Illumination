@@ -30,6 +30,9 @@ shared_ptr<Camera> camera;
 shared_ptr<Program> prog;
 shared_ptr<Program> Sprog;
 shared_ptr<Program> Tprog;
+
+shared_ptr<Program> SBprog; //skybox shader
+
 shared_ptr<Shape> shape;
 shared_ptr<Shape> shape2;
 //skybox additions;
@@ -209,6 +212,16 @@ static void init()
 	Tprog->addUniform("lightPos");
 	Tprog->addUniform("lightPos2");
 	Tprog->setVerbose(false);
+	//shader 3
+	SBprog = make_shared<Program>();
+	SBprog->setShaderNames(RESOURCE_DIR + "sbvert.glsl", RESOURCE_DIR + "sbfrag.glsl");
+	SBprog->setVerbose(true);
+	SBprog->init();
+	SBprog->addAttribute("aPos");
+	SBprog->addUniform("MV");
+	SBprog->addUniform("P");
+	SBprog->addUniform("skybox");
+	SBprog->setVerbose(false);
 
 
 	//create camera
@@ -227,8 +240,8 @@ static void init()
 	shape2->init();
 	shape2->translate(glm::vec3(-1.0, 0.0, -1.0));
 
-	skybox = make_shared<SkyBox>(RESOURCE_DIR);
-	skybox->setShaderNames(RESOURCE_DIR + "sbvert.glsl", RESOURCE_DIR + "sbfrag.glsl");
+	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox/");
+	skybox->prog = SBprog;
 	skybox->init();
 
 
@@ -271,6 +284,17 @@ static void render()
 	camera->applyProjectionMatrix(P);
 	MV->pushMatrix();
 	camera->applyViewMatrix(MV);
+
+	//draw the skybox
+	SBprog->bind();
+	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+
+	skybox->bindtexture(prog->getUniform("skybox"));
+	skybox->draw();
+	skybox->unbindtexture();
+	SBprog->unbind();
+
 
 	
 	if (Sshader) {
@@ -324,12 +348,6 @@ static void render()
 		prog->unbind();
 	}
 
-	//draw the skybox
-	//glDepthMask(GL_FALSE);
-	//
-	//glBindVertexArrayy();
-
-	
 	MV->popMatrix();
 	P->popMatrix();
 	

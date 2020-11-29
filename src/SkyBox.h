@@ -7,8 +7,8 @@
 #include <GL/glew.h>
 #include "GLSL.h"
 #include <glm/glm.hpp>
-//#include <GL/glew.h>
-//#include "Shape.h"
+
+#include "program.h"
 
 class SkyBox {
 
@@ -20,19 +20,17 @@ public:
 	std::vector<std::string> faces;
 	std::string Resource_dir;
 
-	void setShaderNames(const std::string& v, const std::string& f);
-	
-	virtual void bind();
-	virtual void unbind();
+	std::shared_ptr<Program> prog;
+
 	void draw();
+
+	void bindtexture(GLint handle);
+	void unbindtexture();
 
 private:
 	std::vector<float> posBuf;
-	GLuint pid;
 	GLuint posid;
 	GLuint tid;
-	std::string vShaderName;
-	std::string fShaderName;
 
 	bool isVerbose = false;
 

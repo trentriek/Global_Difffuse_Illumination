@@ -61,110 +61,52 @@ unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces)
 	return textureID;
 }
 
-void SkyBox::setShaderNames(const string& v, const string& f)
-{
-	vShaderName = v;
-	fShaderName = f;
-}
-
 void SkyBox::init() {
 	posBuf = {
 		// positions          
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
+		-3.0f,  3.0f, -3.0f,
+		-3.0f, -3.0f, -3.0f,
+		 3.0f, -3.0f, -3.0f,
+		 3.0f, -3.0f, -3.0f,
+		 3.0f,  3.0f, -3.0f,
+		-3.0f,  3.0f, -3.0f,
 
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
+		-3.0f, -3.0f,  3.0f,
+		-3.0f, -3.0f, -3.0f,
+		-3.0f,  3.0f, -3.0f,
+		-3.0f,  3.0f, -3.0f,
+		-3.0f,  3.0f,  3.0f,
+		-3.0f, -3.0f,  3.0f,
 
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
+		 3.0f, -3.0f, -3.0f,
+		 3.0f, -3.0f,  3.0f,
+		 3.0f,  3.0f,  3.0f,
+		 3.0f,  3.0f,  3.0f,
+		 3.0f,  3.0f, -3.0f,
+		 3.0f, -3.0f, -3.0f,
 
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
+		-3.0f, -3.0f,  3.0f,
+		-3.0f,  3.0f,  3.0f,
+		 3.0f,  3.0f,  3.0f,
+		 3.0f,  3.0f,  3.0f,
+		 3.0f, -3.0f,  3.0f,
+		-3.0f, -3.0f,  3.0f,
 
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
+		-3.0f,  3.0f, -3.0f,
+		 3.0f,  3.0f, -3.0f,
+		 3.0f,  3.0f,  3.0f,
+		 3.0f,  3.0f,  3.0f,
+		-3.0f,  3.0f,  3.0f,
+		-3.0f,  3.0f, -3.0f,
 
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
+		-3.0f, -3.0f, -3.0f,
+		-3.0f, -3.0f,  3.0f,
+		 3.0f, -3.0f, -3.0f,
+		 3.0f, -3.0f, -3.0f,
+		-3.0f, -3.0f,  3.0f,
+		 3.0f, -3.0f,  3.0f
 	};
 
-	//PART 1: settup the skkybox shaders
-	GLint rc;
-
-	// Create shader handles
-	GLuint VS = glCreateShader(GL_VERTEX_SHADER);
-	GLuint FS = glCreateShader(GL_FRAGMENT_SHADER);
-
-	// Read shader sources
-	const char* vshader = GLSL::textFileRead(vShaderName.c_str());
-	const char* fshader = GLSL::textFileRead(fShaderName.c_str());
-	glShaderSource(VS, 1, &vshader, NULL);
-	glShaderSource(FS, 1, &fshader, NULL);
-
-	// Compile vertex shader
-	glCompileShader(VS);
-	glGetShaderiv(VS, GL_COMPILE_STATUS, &rc);
-	if (!rc) {
-		if (isVerbose) {
-			GLSL::printShaderInfoLog(VS);
-			cout << "Error compiling vertex shader " << vShaderName << endl;
-		}
-		return;
-	}
-
-	// Compile fragment shader
-	glCompileShader(FS);
-	glGetShaderiv(FS, GL_COMPILE_STATUS, &rc);
-	if (!rc) {
-		if (isVerbose) {
-			GLSL::printShaderInfoLog(FS);
-			cout << "Error compiling fragment shader " << fShaderName << endl;
-		}
-		return;
-	}
-
-	// Create the program and link
-	pid = glCreateProgram();
-	glAttachShader(pid, VS);
-	glAttachShader(pid, FS);
-	glLinkProgram(pid);
-	glGetProgramiv(pid, GL_LINK_STATUS, &rc);
-	if (!rc) {
-		if (isVerbose) {
-			GLSL::printProgramInfoLog(pid);
-			cout << "Error linking shaders " << vShaderName << " and " << fShaderName << endl;
-		}
-		return;
-	}
-
-
-
-	GLSL::checkError(GET_FILE_LINE);
 
 	//PART 2: create the position and texture buffers.
 
@@ -179,19 +121,45 @@ void SkyBox::init() {
 
 }
 
-void SkyBox::bind() {
-	glUseProgram(pid);
-}
-void SkyBox::unbind() {
-	glUseProgram(0);
-}
-
 void SkyBox::draw() {
-	
-	//glGetAttribLocation(pid, name.c_str());
 
-	//glUniformMatrix4fv(glGetAttribLocation(pid, "test");, 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	//glUniformMatrix4fv(Sprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		// Bind position buffer
+		int h_pos = prog->getAttribute("aPos");
+		glEnableVertexAttribArray(h_pos);
+		glBindBuffer(GL_ARRAY_BUFFER, posid);
+		glVertexAttribPointer(h_pos, 3, GL_FLOAT, GL_FALSE, 0, (const void*)0);
+
+		// Bind texcoords buffer
+		int h_tex = prog->getUniform("skybox");
+		if (h_tex != -1 && tid != 0) {
+			glEnableVertexAttribArray(h_tex);
+			glBindBuffer(GL_ARRAY_BUFFER, tid);
+			glVertexAttribPointer(h_tex, 2, GL_FLOAT, GL_FALSE, 0, (const void*)0);
+		}
+
+		glDepthMask(GL_FALSE);
+		// Draw
+		int count = posBuf.size() / 3; // number of indices to be rendered
+		glDrawArrays(GL_TRIANGLES, 0, count);
+
+		// Disable and unbind
+		if (h_tex != -1) {
+			glDisableVertexAttribArray(h_tex);
+		}
+		glDisableVertexAttribArray(h_pos);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDepthMask(GL_TRUE);
+		GLSL::checkError(GET_FILE_LINE);
+}
+
+void SkyBox::bindtexture(GLint handle) {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, tid);
+	glUniform1i(handle, 0);
+}
+void SkyBox::unbindtexture() {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 
