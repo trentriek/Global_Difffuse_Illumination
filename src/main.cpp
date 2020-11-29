@@ -1,0 +1,398 @@
+#include <cassert>
+#include <cstring>
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <iostream>
+
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "Camera.h"
+#include "GLSL.h"
+#include "MatrixStack.h"
+#include "Program.h"
+#include "Shape.h"
+#include "Material.h"
+#include "Light.h"
+#include "SkyBox.h"
+
+using namespace std;
+
+GLFWwindow *window; // Main application window
+string RESOURCE_DIR = "./"; // Where the resources are loaded from
+
+shared_ptr<Camera> camera;
+shared_ptr<Program> prog;
+shared_ptr<Program> Sprog;
+shared_ptr<Program> Tprog;
+shared_ptr<Shape> shape;
+shared_ptr<Shape> shape2;
+//skybox additions;
+shared_ptr<SkyBox> skybox;
+GLuint SB_tid; GLuint SB_posid;
+
+const int numofMats = 3;
+const int numofLights = 2;
+Material M1;
+Material M2;
+Material M3;
+Material Toon;
+Material* Mats[numofMats] = { &M1,&M2,&M3 };
+Light L1;
+Light L2;
+Light* Lights[numofLights] = {&L1,&L2};
+int mIndex = 0;
+int lIndex = 0;
+Material* SelectedMaterial = Mats[0];
+Light* SelectedLight = Lights[0];
+bool Sshader = false;
+bool Tshader = false;
+
+bool keyToggles[256] = {false}; // only for English keyboards!
+
+// This function is called when a GLFW error occurs
+static void error_callback(int error, const char *description)
+{
+	cerr << description << endl;
+}
+
+// This function is called when a key is pressed
+static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+}
+
+// This function is called when the mouse is clicked
+static void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+{
+	// Get the current mouse position.
+	double xmouse, ymouse;
+	glfwGetCursorPos(window, &xmouse, &ymouse);
+	// Get current window size.
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	if(action == GLFW_PRESS) {
+		bool shift = (mods & GLFW_MOD_SHIFT) != 0;
+		bool ctrl  = (mods & GLFW_MOD_CONTROL) != 0;
+		bool alt   = (mods & GLFW_MOD_ALT) != 0;
+		camera->mouseClicked((float)xmouse, (float)ymouse, shift, ctrl, alt);
+	}
+}
+
+// This function is called when the mouse moves
+static void cursor_position_callback(GLFWwindow* window, double xmouse, double ymouse)
+{
+	int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+	if(state == GLFW_PRESS) {
+		camera->mouseMoved((float)xmouse, (float)ymouse);
+	}
+}
+
+static void char_callback(GLFWwindow *window, unsigned int key)
+{
+	keyToggles[key] = !keyToggles[key];
+
+	if (key == 'm') {
+		if (SelectedMaterial == Mats[numofMats - 1]) { SelectedMaterial = Mats[0];  mIndex = 0; }  //toggling standard blinn-phong shader not used - still calls input but nothing happens.
+		 else {																					   //lookk at the render function
+			 mIndex++;
+			 SelectedMaterial = Mats[mIndex];
+		 }
+	}
+	if (key == 'M') {
+		if (SelectedMaterial == Mats[0]) { SelectedMaterial = Mats[numofMats-1];  mIndex = 2; }
+		else { mIndex--; SelectedMaterial = Mats[mIndex]; }
+	}
+	if (key == 'l') {
+		if (SelectedLight == Lights[numofLights-1]) { SelectedLight = Lights[0];  lIndex = 0; }
+		else { lIndex++; SelectedLight = Lights[lIndex]; }
+	}
+	if (key == 'L') {
+		if (SelectedLight == Lights[0]) { SelectedLight = Lights[numofLights - 1];  lIndex = 1; }
+		else { lIndex--; SelectedLight = Lights[lIndex]; }
+	}
+	if (key == 'x') {
+		SelectedLight->LightPos.x += 1.0f;
+	}
+	if (key == 'X') {
+		SelectedLight->LightPos.x -= 1.0f;
+	}
+	if (key == 'y') {
+		SelectedLight->LightPos.y += 1.0f;
+	}
+	if (key == 'Y') {
+		SelectedLight->LightPos.y -= 1.0f;
+	}
+	if (key == 'z') {
+		SelectedLight->LightPos.z += 1.0f;
+	}
+	if (key == 'Z') {
+		SelectedLight->LightPos.z -= 1.0f;
+	}
+	if (key == 's') {
+		Sshader = !Sshader;
+	}
+	if (key == 'S') {
+		Sshader = !Sshader;
+	}
+	if (key == 't') {
+		Tshader = !Tshader;
+	}
+	if (key == 'T') {
+		Tshader = !Tshader;
+	}
+}
+
+// If the window is resized, capture the new size and reset the viewport
+static void resize_callback(GLFWwindow *window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+}
+
+// This function is called once to initialize the scene and OpenGL
+static void init()
+{
+	// Initialize time.
+	glfwSetTime(0.0);
+	
+	// Set background color.
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	// Enable z-buffer test.
+	glEnable(GL_DEPTH_TEST);
+
+	//create program shader1
+	prog = make_shared<Program>();
+	prog->setShaderNames(RESOURCE_DIR + "vert.glsl", RESOURCE_DIR + "frag.glsl");
+	prog->setVerbose(true);
+	prog->init();
+	prog->addAttribute("aPos");
+	prog->addAttribute("aNor");
+	prog->addUniform("MV");
+	prog->addUniform("P");
+	prog->addUniform("lightPos");
+	prog->addUniform("lightInt");
+	prog->addUniform("lightPos2");
+	prog->addUniform("lightInt2");
+	prog->addUniform("ka");
+	prog->addUniform("kd");
+	prog->addUniform("ks");
+	prog->addUniform("s");
+	prog->setVerbose(false);
+
+	//create shader2
+	Sprog = make_shared<Program>();
+	Sprog->setShaderNames(RESOURCE_DIR + "Svert.glsl", RESOURCE_DIR + "Sfrag.glsl");
+	Sprog->setVerbose(true);
+	Sprog->init();
+	Sprog->addAttribute("aPos");
+	Sprog->addAttribute("aNor");
+	Sprog->addUniform("MV");
+	Sprog->addUniform("P");
+	Sprog->setVerbose(false);
+
+	//create shader2
+	Tprog = make_shared<Program>();
+	Tprog->setShaderNames(RESOURCE_DIR + "tvert.glsl", RESOURCE_DIR + "tfrag.glsl");
+	Tprog->setVerbose(true);
+	Tprog->init();
+	Tprog->addUniform("MV");
+	Tprog->addUniform("P");
+	Tprog->addAttribute("aPos");
+	Tprog->addAttribute("aNor");
+	Tprog->addUniform("lightPos");
+	Tprog->addUniform("lightPos2");
+	Tprog->setVerbose(false);
+
+
+	//create camera
+	camera = make_shared<Camera>();
+	camera->setInitDistance(2.0f);
+	
+	//load mesh
+	shape = make_shared<Shape>();
+	shape->loadMesh(RESOURCE_DIR + "bunny.obj");
+	shape->fitToUnitBox();
+	shape->init();
+	
+	shape2 = make_shared<Shape>();
+	shape2->loadMesh(RESOURCE_DIR + "cube.obj");
+	shape2->fitToUnitBox();
+	shape2->init();
+	shape2->translate(glm::vec3(-1.0, 0.0, -1.0));
+
+	skybox = make_shared<SkyBox>(RESOURCE_DIR);
+	skybox->setShaderNames(RESOURCE_DIR + "sbvert.glsl", RESOURCE_DIR + "sbfrag.glsl");
+	skybox->init();
+
+
+	//set Materials
+	Material::CreateMaterialsForProject(prog, M1, M2, M3, Toon);
+
+	//set lighting
+	Light::createLightForProject(prog, L1, L2);
+	
+	GLSL::checkError(GET_FILE_LINE);
+}
+
+// This function is called every frame to draw the scene.
+static void render()
+{
+	// Clear framebuffer.
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if(keyToggles[(unsigned)'c']) {
+		glEnable(GL_CULL_FACE);
+	} else {
+		glDisable(GL_CULL_FACE);
+	}
+	if(keyToggles[(unsigned)'w']) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+	
+	// Get current frame buffer size.
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	camera->setAspect((float)width/(float)height);
+	
+	// Matrix stacks
+	auto P = make_shared<MatrixStack>();
+	auto MV = make_shared<MatrixStack>();
+	
+	// Apply camera transforms
+	P->pushMatrix();
+	camera->applyProjectionMatrix(P);
+	MV->pushMatrix();
+	camera->applyViewMatrix(MV);
+
+	
+	if (Sshader) {
+		Sprog->bind();
+		glUniformMatrix4fv(Sprog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+		glUniformMatrix4fv(Sprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+
+		shape->draw(Sprog);
+
+		//draw object 2
+		MV->multMatrix(shape2->Transform.topMatrix());
+		glUniformMatrix4fv(Sprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		shape2->draw(Sprog);
+
+		Sprog->unbind();
+	
+	}
+	else if(Tshader) {
+		Tprog->bind();
+		glUniformMatrix4fv(Tprog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+		glUniformMatrix4fv(Tprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+
+		glUniform3f(Tprog->getUniform("lightPos"), L1.LightPos.x, L1.LightPos.y, L1.LightPos.z);
+		glUniform3f(Tprog->getUniform("lightPos2"), L2.LightPos.x, L2.LightPos.y, L2.LightPos.z);
+
+		shape->draw(Tprog);
+
+		//draw object 2
+		MV->multMatrix(shape2->Transform.topMatrix());
+		glUniformMatrix4fv(Tprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		shape2->draw(Tprog);
+
+		Tprog->unbind();
+	}
+	else {
+		prog->bind();
+		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		//set light
+		L1.SetShaderLight();
+		L2.SetShaderLight();
+		//set material
+		M1.SetShaderToMat();
+		shape->draw(prog);
+
+		//draw object 2
+		MV->multMatrix(shape2->Transform.topMatrix());
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		shape2->draw(prog);
+
+		prog->unbind();
+	}
+
+	//draw the skybox
+	//glDepthMask(GL_FALSE);
+	//
+	//glBindVertexArrayy();
+
+	
+	MV->popMatrix();
+	P->popMatrix();
+	
+	GLSL::checkError(GET_FILE_LINE);
+}
+
+int main(int argc, char **argv)
+{
+	if(argc < 2) {
+		cout << "Please specify the resource directory." << endl;
+		return 0;
+	}
+	RESOURCE_DIR = argv[1] + string("/");
+
+	// Set error callback.
+	glfwSetErrorCallback(error_callback);
+	// Initialize the library.
+	if(!glfwInit()) {
+		return -1;
+	}
+	// Create a windowed mode window and its OpenGL context.
+	window = glfwCreateWindow(640, 480, "Trent Riek", NULL, NULL);
+	if(!window) {
+		glfwTerminate();
+		return -1;
+	}
+	// Make the window's context current.
+	glfwMakeContextCurrent(window);
+	// Initialize GLEW.
+	glewExperimental = true;
+	if(glewInit() != GLEW_OK) {
+		cerr << "Failed to initialize GLEW" << endl;
+		return -1;
+	}
+	glGetError(); // A bug in glewInit() causes an error that we can safely ignore.
+	cout << "OpenGL version: " << glGetString(GL_VERSION) << endl;
+	cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+	GLSL::checkVersion();
+	// Set vsync.
+	glfwSwapInterval(1);
+	// Set keyboard callback.
+	glfwSetKeyCallback(window, key_callback);
+	// Set char callback.
+	glfwSetCharCallback(window, char_callback);
+	// Set cursor position callback.
+	glfwSetCursorPosCallback(window, cursor_position_callback);
+	// Set mouse button callback.
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	// Set the window resize call back.
+	glfwSetFramebufferSizeCallback(window, resize_callback);
+	// Initialize scene.
+	init();
+	// Loop until the user closes the window.
+	while(!glfwWindowShouldClose(window)) {
+		// Render scene.
+		render();
+		// Swap front and back buffers.
+		glfwSwapBuffers(window);
+		// Poll for and process events.
+		glfwPollEvents();
+	}
+	// Quit program.
+	glfwDestroyWindow(window);
+	glfwTerminate();
+	return 0;
+}
