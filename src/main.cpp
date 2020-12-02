@@ -35,9 +35,12 @@ shared_ptr<Program> SBprog; //skybox shader
 
 shared_ptr<Shape> shape;
 shared_ptr<Shape> shape2;
-//skybox additions;
+
+//Global Illumination additions:
 shared_ptr<SkyBox> skybox;
-GLuint SB_tid; GLuint SB_posid;
+DGI Irradiance;
+glm::mat4x4 Global_R; glm::mat4x4 Global_G; glm::mat4x4 Global_B;
+
 
 const int numofMats = 3;
 const int numofLights = 2;
@@ -198,6 +201,9 @@ static void init()
 	Sprog->addAttribute("aNor");
 	Sprog->addUniform("MV");
 	Sprog->addUniform("P");
+	Sprog->addUniform("E_R");
+	Sprog->addUniform("E_G");
+	Sprog->addUniform("E_B");
 	Sprog->setVerbose(false);
 
 	//create shader2
@@ -211,6 +217,9 @@ static void init()
 	Tprog->addAttribute("aNor");
 	Tprog->addUniform("lightPos");
 	Tprog->addUniform("lightPos2");
+	Tprog->addUniform("E_R");
+	Tprog->addUniform("E_G");
+	Tprog->addUniform("E_B");
 	Tprog->setVerbose(false);
 	//shader 3
 	SBprog = make_shared<Program>();
@@ -240,9 +249,24 @@ static void init()
 	shape2->init();
 	shape2->translate(glm::vec3(-1.0, 0.0, -1.0));
 
-	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox/");
+	//Final project addition - added a skybox as well as a global
+
+	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox2/");
 	skybox->prog = SBprog;
-	skybox->init();
+	skybox->init(&Irradiance); //we pass in the Irradiance class so that we can pass in the color infomration of the skybox as its being read in.
+
+	Irradiance.add_coefficient(0, 0);
+	Irradiance.add_coefficient(1, 1);
+	Irradiance.add_coefficient(1, 0);
+	Irradiance.add_coefficient(1, -1);
+	Irradiance.add_coefficient(2, 1);
+	Irradiance.add_coefficient(2, -1);
+	Irradiance.add_coefficient(2, -2);
+	Irradiance.add_coefficient(2, 0);
+	Irradiance.add_coefficient(2, 2);
+
+	//Irradiance.calculateCoefficients();
+	//get_MatrixCoeffeicients(Global_R, Global_G, Global_B, &Irradiance);
 
 
 	//set Materials
@@ -301,7 +325,9 @@ static void render()
 		Sprog->bind();
 		glUniformMatrix4fv(Sprog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		glUniformMatrix4fv(Sprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-
+		glUniformMatrix4fv(Sprog->getUniform("E_R"), 1, GL_FALSE, glm::value_ptr(Global_R));
+		glUniformMatrix4fv(Sprog->getUniform("E_G"), 1, GL_FALSE, glm::value_ptr(Global_G));
+		glUniformMatrix4fv(Sprog->getUniform("E_B"), 1, GL_FALSE, glm::value_ptr(Global_B));
 		shape->draw(Sprog);
 
 		//draw object 2
@@ -319,6 +345,10 @@ static void render()
 
 		glUniform3f(Tprog->getUniform("lightPos"), L1.LightPos.x, L1.LightPos.y, L1.LightPos.z);
 		glUniform3f(Tprog->getUniform("lightPos2"), L2.LightPos.x, L2.LightPos.y, L2.LightPos.z);
+
+		glUniformMatrix4fv(Sprog->getUniform("E_R"), 1, GL_FALSE, glm::value_ptr(Global_R));
+		glUniformMatrix4fv(Sprog->getUniform("E_G"), 1, GL_FALSE, glm::value_ptr(Global_G));
+		glUniformMatrix4fv(Sprog->getUniform("E_B"), 1, GL_FALSE, glm::value_ptr(Global_B));
 
 		shape->draw(Tprog);
 
@@ -413,4 +443,64 @@ int main(int argc, char **argv)
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
+}
+void get_MatrixCoeffeicients(glm::mat4x4& R, glm::mat4x4& G, glm::mat4x4& B, DGI* ir) {
+
+	double c1 = 0.429043;
+	double c2 = 0.511664;
+	double c3 = 0.743125;
+	double c4 = 0.886227;
+	double c5 = 0.247708;
+
+	R[0][0] = c1 * ir->get_coefficient(2, 2, 0);
+	R[0][1] = c1 * ir->get_coefficient(2, -2, 0);
+	R[0][2] = c1 * ir->get_coefficient(2, 1, 0);
+	R[0][3] = c2 * ir->get_coefficient(1, 1, 0);
+	R[1][0] = c1 * ir->get_coefficient(2, -2, 0);
+	R[1][1] = -c1 * ir->get_coefficient(2, 2, 0);
+	R[1][2] = c1 * ir->get_coefficient(2, -1, 0);
+	R[1][3] = c2 * ir->get_coefficient(1, -1, 0);
+	R[2][0] = c1 * ir->get_coefficient(2, 1, 0);
+	R[2][1] = c1 * ir->get_coefficient(2, -1, 0);
+	R[2][2] = c3 * ir->get_coefficient(2, 0, 0);
+	R[2][3] = c2 * ir->get_coefficient(1, 0, 0);
+	R[3][0] = c2 * ir->get_coefficient(1, 1, 0);
+	R[3][1] = c2 * ir->get_coefficient(1, -1, 0);
+	R[3][2] = c2 * ir->get_coefficient(1, 0, 0);
+	R[3][3] = ( c4 * ir->get_coefficient(0, 0, 0) ) - (c5 * ir->get_coefficient(2, 0, 0));
+
+	G[0][0] = c1 * ir->get_coefficient(2, 2, 1);
+	G[0][1] = c1 * ir->get_coefficient(2, -2, 1);
+	G[0][2] = c1 * ir->get_coefficient(2, 1, 1);
+	G[0][3] = c2 * ir->get_coefficient(1, 1, 1);
+	G[1][0] = c1 * ir->get_coefficient(2, -2, 1);
+	G[1][1] = -c1 * ir->get_coefficient(2, 2, 1);
+	G[1][2] = c1 * ir->get_coefficient(2, -1, 1);
+	G[1][3] = c2 * ir->get_coefficient(1, -1, 1);
+	G[2][0] = c1 * ir->get_coefficient(2, 1, 1);
+	G[2][1] = c1 * ir->get_coefficient(2, -1, 1);
+	G[2][2] = c3 * ir->get_coefficient(2, 0, 1);
+	G[2][3] = c2 * ir->get_coefficient(1, 0, 1);
+	G[3][0] = c2 * ir->get_coefficient(1, 1, 1);
+	G[3][1] = c2 * ir->get_coefficient(1, -1, 1);
+	G[3][2] = c2 * ir->get_coefficient(1, 0, 1);
+	G[3][3] = (c4 * ir->get_coefficient(0, 0, 1)) - (c5 * ir->get_coefficient(2, 0, 1));
+
+	B[0][0] = c1 * ir->get_coefficient(2, 2, 2);
+	B[0][1] = c1 * ir->get_coefficient(2, -2, 2);
+	B[0][2] = c1 * ir->get_coefficient(2, 1, 2);
+	B[0][3] = c2 * ir->get_coefficient(1, 1, 2);
+	B[1][0] = c1 * ir->get_coefficient(2, -2, 2);
+	B[1][1] = -c1 * ir->get_coefficient(2, 2, 2);
+	B[1][2] = c1 * ir->get_coefficient(2, -1, 2);
+	B[1][3] = c2 * ir->get_coefficient(1, -1, 2);
+	B[2][0] = c1 * ir->get_coefficient(2, 1, 2);
+	B[2][1] = c1 * ir->get_coefficient(2, -1, 2);
+	B[2][2] = c3 * ir->get_coefficient(2, 0, 2);
+	B[2][3] = c2 * ir->get_coefficient(1, 0, 2);
+	B[3][0] = c2 * ir->get_coefficient(1, 1, 2);
+	B[3][1] = c2 * ir->get_coefficient(1, -1, 2);
+	B[3][2] = c2 * ir->get_coefficient(1, 0, 2);
+	B[3][3] = (c4 * ir->get_coefficient(0, 0, 2)) - (c5 * ir->get_coefficient(2, 0, 2));
+
 }

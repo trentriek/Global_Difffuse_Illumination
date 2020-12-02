@@ -29,7 +29,7 @@ SkyBox::~SkyBox() {
 
 }
 
-unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces)
+unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces, DGI* I)
 {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
@@ -44,6 +44,11 @@ unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces)
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
 			);
+			if (I) {
+				I->getrgbvalues(data, width, height);
+			}
+
+
 			stbi_image_free(data);
 		}
 		else
@@ -61,7 +66,7 @@ unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces)
 	return textureID;
 }
 
-void SkyBox::init() {
+void SkyBox::init(DGI* I) {
 	posBuf = {
 		// positions          
 		-3.0f,  3.0f, -3.0f,
@@ -117,7 +122,7 @@ void SkyBox::init() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	GLSL::checkError(GET_FILE_LINE);
 
-	tid = loadCubemapTexture(faces);
+	tid = loadCubemapTexture(faces, I);
 
 }
 

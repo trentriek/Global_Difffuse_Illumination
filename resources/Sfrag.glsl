@@ -2,6 +2,9 @@
 
 varying vec3 vpos; // vertex position in camera space
 varying vec3 normal; //normal in camera space
+uniform mat4 E_R; //irradiance R
+uniform mat4 E_G; //irradiance G
+uniform mat4 E_B; //irradiance B
 
 void main()
 {
