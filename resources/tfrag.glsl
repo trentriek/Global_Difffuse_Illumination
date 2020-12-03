@@ -33,7 +33,7 @@ void main()
 	vec3 e = normalize(-vpos); //redundant to subrant from the camera space of 0 0 0 
 	vec3 h = normalize(l + e);
 	vec3 cs = ks * pow(max(0,dot(h,normal)),s);
-	vec3 color1 = lightInt * (cd + cs);
+	vec3 color1 = lightInt * (K * cd + cs);
 
 	//light2
 	l = normalize(lightPos2 - vpos); //for cd
@@ -41,11 +41,10 @@ void main()
 	e = normalize(-vpos); //redundant to subrant from the camera space of 0 0 0 
 	h = normalize(l + e);
 	cs = ks * pow(max(0,dot(h,normal)),s);
-	vec3 color2 = lightInt2 * (cd + cs);
+	vec3 color2 = lightInt2 * (K * cd + cs);
 
 	//add color1 color2
 	vec3 color = color1 + color2;
-	color = color + K;
 	//color = color2;
 	gl_FragColor = vec4(color.r, color.g, color.b, 1.0);
 

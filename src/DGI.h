@@ -17,14 +17,16 @@ public:
 private:
 	
 
-	std::vector<std::vector<int>> Red; //these are passed in RBG values.
-	std::vector<std::vector<int>> Green;
-	std::vector<std::vector<int>> Blue;
+	std::vector<int> Red; //these are passed in RBG values.
+	std::vector<int> Green;
+	std::vector<int> Blue;
 	//std::vector<std::vector<glm::vec3>> texPos;
+
+
 
 	glm::vec3* TPos;
 
-	std::vector<std::vector<int>>* colors[3]; //passed in color values
+	std::vector<int>* colors[3]; //passed in color values
 
 
 	std::map<int, std::map<int, double> >* Llm[3]; //set of Llm RGB values

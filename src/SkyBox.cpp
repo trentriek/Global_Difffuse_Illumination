@@ -58,7 +58,7 @@ unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces, DGI* I)
 		}
 	}
 
-	I->skyboxsize = 3.0;
+	I->skyboxsize = 1.0;
 	I->setupsides(width, height);
 	I->calculateCoefficients();
 

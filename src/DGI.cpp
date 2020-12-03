@@ -24,14 +24,10 @@ void DGI::getrgbvalues(unsigned char* data, int w, int h) {
 
 
 	for (j = 0; j < h; j++) {
-		Red.push_back(vector<int>());
-		Green.push_back(vector<int>());
-		Blue.push_back(vector<int>());
 		for (i = 0; i < w * 3; i = i + 3) {
-			Red[j].push_back(data[i + w * j]);
-			Green[j].push_back(data[i + 1 + w * j]);
-			Blue[j].push_back(data[i + 2 + w * j]);
-
+			Red.push_back(data[i + w * j]);
+			Green.push_back(data[i + 1 + w * j]);
+			Blue.push_back(data[i + 2 + w * j]);
 		}
 	} //texPos
 
@@ -44,13 +40,13 @@ void DGI::setupsides(int w, int h) {
 	int totalsize = w * h * 6;
 	TPos = new glm::vec3[totalsize];
 
-	float interval = (skyboxsize * 2) / (float)w;
+	float interval = 2 / (float)w;
 
 	glm::vec3 point;
 	int i, j, k; k = 0;
 
-	//right
-	point = glm::vec3(1.0f * skyboxsize, 1.0f * skyboxsize, -1.0f * skyboxsize);
+	//right - interval/2
+	point = glm::vec3(1.0f, 1.0f, -1.0f);
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i ++) {
 			TPos[k] = point;
@@ -58,10 +54,10 @@ void DGI::setupsides(int w, int h) {
 			k++;
 		}
 		point.y -= interval;
-		point.z = -1.0f * skyboxsize;
+		point.z = -1.0f;
 	}
 	//left
-	point = glm::vec3(-1.0f * skyboxsize, 1.0f * skyboxsize, -1.0f * skyboxsize);
+	point = glm::vec3(-1.0f, 1.0f, -1.0f);
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			TPos[k] = point;
@@ -69,10 +65,10 @@ void DGI::setupsides(int w, int h) {
 			k++;
 		}
 		point.y -= interval;
-		point.z = -1.0f * skyboxsize;
+		point.z = -1.0f;
 	}
 	//top
-	point = glm::vec3(-1.0f * skyboxsize, 1.0f * skyboxsize, -1.0f * skyboxsize);
+	point = glm::vec3(-1.0f, 1.0f, -1.0f);
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			TPos[k] = point;
@@ -80,10 +76,10 @@ void DGI::setupsides(int w, int h) {
 			k++;
 		}
 		point.z += interval;
-		point.x = -1.0f * skyboxsize;
+		point.x = -1.0f;
 	}
 	//bottom
-	point = glm::vec3(-1.0f * skyboxsize, -1.0f * skyboxsize, 1.0f * skyboxsize);
+	point = glm::vec3(-1.0f, -1.0f, 1.0f);
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			TPos[k] = point;
@@ -91,10 +87,10 @@ void DGI::setupsides(int w, int h) {
 			k++;
 		}
 		point.z -= interval;
-		point.x = -1.0f * skyboxsize;
+		point.x = -1.0f;
 	}
 	//front
-	point = glm::vec3(-1.0f * skyboxsize, 1.0f * skyboxsize, 1.0f * skyboxsize);
+	point = glm::vec3(-1.0f, 1.0f, 1.0f);
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			TPos[k] = point;
@@ -102,10 +98,10 @@ void DGI::setupsides(int w, int h) {
 			k++;
 		}
 		point.y -= interval;
-		point.x = -1.0f * skyboxsize;
+		point.x = -1.0f;
 	}
 	//back
-	point = glm::vec3(-1.0f * skyboxsize, 1.0f * skyboxsize, -1.0f * skyboxsize);
+	point = glm::vec3(-1.0f, 1.0f, -1.0f);
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			TPos[k] = point;
@@ -113,7 +109,7 @@ void DGI::setupsides(int w, int h) {
 			k++;
 		}
 		point.y -= interval;
-		point.x = -1.0f * skyboxsize;
+		point.x = -1.0f;
 	}
 
 	//for (i = 0; i < totalsize; i++) {
@@ -126,45 +122,102 @@ void DGI::calculateCoefficients() {
 
 	int i, j, k;
 	double x, y, z;
-	int u = 0;
+
 	int s = Red.size() / 6;
 	double theta = 0.0;
 	double formfactor = 0.0;
+
+	double Llm00[3] = {0.0,0.0,0.0};
+	double Llm11[3] = {0.0,0.0,0.0};
+	double Llm10[3] = { 0.0,0.0,0.0 };
+	double Llm1_1[3] = { 0.0,0.0,0.0 };
+	double Llm21[3] = { 0.0,0.0,0.0 };
+	double Llm2_1[3] = { 0.0,0.0,0.0 };
+	double Llm2_2[3] = { 0.0,0.0,0.0 };
+	double Llm20[3] = { 0.0,0.0,0.0 };
+	double Llm22[3] = { 0.0,0.0,0.0 };
+
 	cout << "here" << endl;
-	for ( j = 0; j < Red.size(); j++) { 
-		for ( i = 0; i < Red[j].size(); i++) { //for each pixel (or from 0 to 2PI)
-			//get theta and phi
-			
-			//
-			for ( k = 0; k < 3; k++) { //for each color
-				float c = (float)colors[k]->at(j).at(i); //convert color from RGBA to somethhing else? 0 to 1;
+	double pixelarea = pow(2.0 / 512.0, 2);
+
+	//remove these
+	double sumofformfactors = 0.0;//i
+	for (j = 0; j < Red.size(); j = j + s) {
+		for (i = 0; i < s; i++) { //for each pixel (or from 0 to 2PI)
+
+			for (k = 0; k < 3; k++) { //for each color
+				float c = (float)colors[k]->at(i+j); //convert color from RGBA
 				c = c / 255.0f;
-				x = TPos[u].x;	y = TPos[u].y; 	z = TPos[u].z;
-				
-				if (u > s * 2 && u < s * 4) { //if this is the top and bottom textures, do this:
-					formfactor = 1.0 / (3.141592 * pow(pow(x, 2) + pow(y, 2) + 1, 2));
-					theta = acos(1.0 / sqrt(pow(x, 2) + pow(y, 2) + 1) );
+				x = TPos[i + j].x;	y = TPos[i + j].y; 	z = TPos[i + j].z;
+
+				//left right
+				if (j < s * 2) {
+					if (i > 255) continue;
+					formfactor = abs(y) * pixelarea / (3.141592 * pow(pow(z, 2) + pow(y, 2) + 1, 2));
+					sumofformfactors += formfactor;
+					theta = acos(abs(y) * pixelarea / sqrt(pow(z, 2) + pow(y, 2) + 1));
 				}
-				else {
-					formfactor = z / (3.141592 * pow(pow(y, 2) + pow(z, 2) + 1, 2));
-					theta = acos(z / sqrt(pow(y, 2) + pow(z, 2) + 1));
+				//top bottom
+				else if (j >= s * 2 && j < s * 4) { //if this is the top and bottom textures, do this:
+					formfactor = (pixelarea / (3.141592 * pow(pow(x, 2) + pow(z, 2) + 1, 2)));
+					sumofformfactors += formfactor;
+					theta = acos(pixelarea / sqrt(pow(x, 2) + pow(z, 2) + 1));
+				}
+				//back front
+				else
+				{
+					if (i > 255) continue;
+					formfactor = abs(y) * pixelarea / (3.141592 * pow(pow(x, 2) + pow(y, 2) + 1, 2));
+					sumofformfactors += formfactor;
+					theta = acos(abs(y) * pixelarea / sqrt(pow(x, 2) + pow(y, 2) + 1));
 				}
 
-				Llm[k]->at(0).at(0) += c * ( 0.282095) * sin(theta) * formfactor;
+				Llm00[k] += c * (0.282095) * sin(theta) * formfactor;
 				//cout << c * ( 0.282095) * sin(theta) * formfactor << endl;
-				Llm[k]->at(1).at(1) += c * (0.488603 * x) * sin(theta) * formfactor;
-				Llm[k]->at(1).at(0) += c * (0.488603 * y) * sin(theta) * formfactor;
-				Llm[k]->at(1).at(-1) += c * (0.488603 * z) * sin(theta) * formfactor;
-				Llm[k]->at(2).at(1) += c * (1.092548 * x * z) * sin(theta) * formfactor;
-				Llm[k]->at(2).at(-1) += c * (1.092548 * y * z) * sin(theta) * formfactor;
-				Llm[k]->at(2).at(-2) += c * (1.092548 * x * y) * sin(theta) * formfactor;
-				Llm[k]->at(2).at(0) += c * (0.315392 * (3 * pow(z, 2) - 1)) * sin(theta) * formfactor;
-				Llm[k]->at(2).at(2) += c * (0.546274 * (pow(x, 2) * pow(y, 2))) * sin(theta) * formfactor;
+				Llm11[k] += c * (0.488603 * x) * sin(theta) * formfactor;
+				Llm10[k] += c * (0.488603 * y) * sin(theta) * formfactor;
+				Llm1_1[k] += c * (0.488603 * z) * sin(theta) * formfactor;
+				Llm21[k] += c * (1.092548 * x * z) * sin(theta) * formfactor;
+				Llm2_1[k] += c * (1.092548 * y * z) * sin(theta) * formfactor;
+				Llm2_2[k] += c * (1.092548 * x * y) * sin(theta) * formfactor;
+				Llm20[k] += c * (0.315392 * (3 * pow(z, 2) - 1)) * sin(theta) * formfactor;
+				Llm22[k] += c * (0.546274 * (pow(x, 2) * pow(y, 2))) * sin(theta) * formfactor;
+
 			}
-			u++;
 		}
 	}
-	cout << "there" << endl;
+
+
+	cout << "sumofformfactors = "<< sumofformfactors << endl;
+	Llm[0]->at(0).at(0) = Llm00[0];
+	Llm[0]->at(1).at(1) = Llm11[0];
+	Llm[0]->at(1).at(0) = Llm10[0];
+	Llm[0]->at(1).at(-1) = Llm1_1[0];
+	Llm[0]->at(2).at(1) = Llm21[0];
+	Llm[0]->at(2).at(-1) = Llm2_1[0];
+	Llm[0]->at(2).at(-2) = Llm2_2[0];
+	Llm[0]->at(2).at(0) = Llm20[0];
+	Llm[0]->at(2).at(2) = Llm22[0];
+
+	Llm[1]->at(0).at(0) = Llm00[1];
+	Llm[1]->at(1).at(1) = Llm11[1];
+	Llm[1]->at(1).at(0) = Llm10[1];
+	Llm[1]->at(1).at(-1) = Llm1_1[1];
+	Llm[1]->at(2).at(1) = Llm21[1];
+	Llm[1]->at(2).at(-1) = Llm2_1[1];
+	Llm[1]->at(2).at(-2) = Llm2_2[1];
+	Llm[1]->at(2).at(0) = Llm20[1];
+	Llm[1]->at(2).at(2) = Llm22[1];
+
+	Llm[2]->at(0).at(0) = Llm00[2];
+	Llm[2]->at(1).at(1) = Llm11[2];
+	Llm[2]->at(1).at(0) = Llm10[2];
+	Llm[2]->at(1).at(-1) = Llm1_1[2];
+	Llm[2]->at(2).at(1) = Llm21[2];
+	Llm[2]->at(2).at(-1) = Llm2_1[2];
+	Llm[2]->at(2).at(-2) = Llm2_2[2];
+	Llm[2]->at(2).at(0) = Llm20[2];
+	Llm[2]->at(2).at(2) = Llm22[2];
 }
 
 void DGI::add_coefficient(int l, int m) {
