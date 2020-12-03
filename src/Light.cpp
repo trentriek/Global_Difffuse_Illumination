@@ -11,9 +11,9 @@ Light::Light(std::shared_ptr<Program> Program) {
 	prog = Program;
 }
 
-void Light::SetShaderLight() {
-	glUniform3f(prog->getUniform(uniformposName), LightPos.x, LightPos.y, LightPos.z);
-	glUniform1f(prog->getUniform(uniformintName), intensity);
+void Light::SetShaderLight(std::shared_ptr<Program>& Program) {
+	glUniform3f(Program->getUniform(uniformposName), LightPos.x, LightPos.y, LightPos.z);
+	glUniform1f(Program->getUniform(uniformintName), intensity);
 }
 
 void Light::createLightForProject(std::shared_ptr<Program>& Program, Light& L1, Light& L2) {

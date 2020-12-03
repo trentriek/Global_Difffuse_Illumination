@@ -17,7 +17,7 @@ public:
 	Material();
 	Material(std::shared_ptr<Program>& Program);
 	Material(std::shared_ptr<Program>& Program, glm::vec3 KA, glm::vec3 KD, glm::vec3 KS, float S);
-	void SetShaderToMat();
+	void SetShaderToMat(std::shared_ptr<Program>& Program);
 
 	static void CreateMaterialsForProject(std::shared_ptr<Program>& Program, Material& M1, Material& M2, Material& M3, Material& Toon);
 

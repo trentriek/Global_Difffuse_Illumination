@@ -20,7 +20,7 @@ public:
 
 	static void createLightForProject(std::shared_ptr<Program>& Program, Light& L1, Light& L2);
 
-	void SetShaderLight();
+	void SetShaderLight(std::shared_ptr<Program>& Program);
 };
 
 #endif

@@ -21,7 +21,7 @@ Material::Material(std::shared_ptr<Program>& Program, glm::vec3 KA, glm::vec3 KD
 	ks = KS;
 	s = S;
 }
-void Material::SetShaderToMat() {
+void Material::SetShaderToMat(std::shared_ptr<Program>& prog) {
 	glUniform3f(prog->getUniform("ka"), ka.x, ka.y, ka.z);
 	glUniform3f(prog->getUniform("kd"), kd.x, kd.y, kd.z);
 	glUniform3f(prog->getUniform("ks"), ks.x, ks.y, ks.z);

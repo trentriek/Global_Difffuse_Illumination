@@ -8,8 +8,18 @@ uniform mat4 E_B; //irradiance B
 
 void main()
 {
-	float angle = dot(normal,normalize(-vpos));
-	vec3 color = vec3(1.0,1.0,1.0);
-	if(abs(angle) < 0.2) {color = vec3(0.0, 0.0, 0.0);}
-	gl_FragColor = vec4(color.r, color.g, color.b, 1.0);
+	vec3 color = vec3(0.0,0.0,0.0);
+
+	vec4 Ambiant = vec4(normal, 1.0) * E_R;
+	color.x = dot(Ambiant,vec4(normal, 1.0));
+
+	Ambiant = vec4(normal, 1.0) * E_G;
+	color.y = dot(Ambiant,vec4(normal, 1.0));
+
+	Ambiant = vec4(normal, 1.0) * E_B;
+	color.z = dot(Ambiant,vec4(normal, 1.0));
+
+	normalize(color);
+
+	gl_FragColor = vec4(color.x, color.y, color.z, 1.0);
 }

@@ -57,6 +57,11 @@ unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces, DGI* I)
 			stbi_image_free(data);
 		}
 	}
+
+	I->skyboxsize = 3.0;
+	I->setupsides(width, height);
+	I->calculateCoefficients();
+
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -68,7 +73,8 @@ unsigned int SkyBox::loadCubemapTexture(std::vector<std::string> faces, DGI* I)
 
 void SkyBox::init(DGI* I) {
 	posBuf = {
-		// positions          
+		// positions
+
 		-3.0f,  3.0f, -3.0f,
 		-3.0f, -3.0f, -3.0f,
 		 3.0f, -3.0f, -3.0f,
@@ -82,6 +88,7 @@ void SkyBox::init(DGI* I) {
 		-3.0f,  3.0f, -3.0f,
 		-3.0f,  3.0f,  3.0f,
 		-3.0f, -3.0f,  3.0f,
+
 
 		 3.0f, -3.0f, -3.0f,
 		 3.0f, -3.0f,  3.0f,

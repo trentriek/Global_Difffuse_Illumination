@@ -40,7 +40,7 @@ shared_ptr<Shape> shape2;
 shared_ptr<SkyBox> skybox;
 DGI Irradiance;
 glm::mat4x4 Global_R; glm::mat4x4 Global_G; glm::mat4x4 Global_B;
-
+void get_MatrixCoeffeicients(glm::mat4x4& R, glm::mat4x4& G, glm::mat4x4& B, DGI* ir);
 
 const int numofMats = 3;
 const int numofLights = 2;
@@ -251,10 +251,6 @@ static void init()
 
 	//Final project addition - added a skybox as well as a global
 
-	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox2/");
-	skybox->prog = SBprog;
-	skybox->init(&Irradiance); //we pass in the Irradiance class so that we can pass in the color infomration of the skybox as its being read in.
-
 	Irradiance.add_coefficient(0, 0);
 	Irradiance.add_coefficient(1, 1);
 	Irradiance.add_coefficient(1, 0);
@@ -265,8 +261,12 @@ static void init()
 	Irradiance.add_coefficient(2, 0);
 	Irradiance.add_coefficient(2, 2);
 
-	//Irradiance.calculateCoefficients();
-	//get_MatrixCoeffeicients(Global_R, Global_G, Global_B, &Irradiance);
+
+	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox3/");
+	skybox->prog = SBprog;
+	skybox->init(&Irradiance); //we pass in the Irradiance class so that we can pass in the color infomration of the skybox as its being read in.
+
+	get_MatrixCoeffeicients(Global_R, Global_G, Global_B, &Irradiance);
 
 
 	//set Materials
@@ -342,16 +342,19 @@ static void render()
 		Tprog->bind();
 		glUniformMatrix4fv(Tprog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		glUniformMatrix4fv(Tprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-
-		glUniform3f(Tprog->getUniform("lightPos"), L1.LightPos.x, L1.LightPos.y, L1.LightPos.z);
-		glUniform3f(Tprog->getUniform("lightPos2"), L2.LightPos.x, L2.LightPos.y, L2.LightPos.z);
-
-		glUniformMatrix4fv(Sprog->getUniform("E_R"), 1, GL_FALSE, glm::value_ptr(Global_R));
-		glUniformMatrix4fv(Sprog->getUniform("E_G"), 1, GL_FALSE, glm::value_ptr(Global_G));
-		glUniformMatrix4fv(Sprog->getUniform("E_B"), 1, GL_FALSE, glm::value_ptr(Global_B));
+		glUniformMatrix4fv(Tprog->getUniform("E_R"), 1, GL_FALSE, glm::value_ptr(Global_R));
+		glUniformMatrix4fv(Tprog->getUniform("E_G"), 1, GL_FALSE, glm::value_ptr(Global_G));
+		glUniformMatrix4fv(Tprog->getUniform("E_B"), 1, GL_FALSE, glm::value_ptr(Global_B));
+		//glUniform3f(Tprog->getUniform("lightPos"), L1.LightPos.x, L1.LightPos.y, L1.LightPos.z);
+		//glUniform3f(Tprog->getUniform("lightPos2"), L2.LightPos.x, L2.LightPos.y, L2.LightPos.z);
+		
+		//set light
+		L1.SetShaderLight(Tprog);
+		L2.SetShaderLight(Tprog);
+		//set material
+		M1.SetShaderToMat(Tprog);
 
 		shape->draw(Tprog);
-
 		//draw object 2
 		MV->multMatrix(shape2->Transform.topMatrix());
 		glUniformMatrix4fv(Tprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
@@ -364,10 +367,10 @@ static void render()
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		//set light
-		L1.SetShaderLight();
-		L2.SetShaderLight();
+		L1.SetShaderLight(prog);
+		L2.SetShaderLight(prog);
 		//set material
-		M1.SetShaderToMat();
+		M1.SetShaderToMat(prog);
 		shape->draw(prog);
 
 		//draw object 2
