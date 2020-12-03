@@ -142,48 +142,43 @@ void DGI::calculateCoefficients() {
 
 	//remove these
 	double sumofformfactors = 0.0;//i
-	for (j = 0; j < Red.size(); j = j + s) {
-		for (i = 0; i < s; i++) { //for each pixel (or from 0 to 2PI)
 
-			for (k = 0; k < 3; k++) { //for each color
-				float c = (float)colors[k]->at(i+j); //convert color from RGBA
-				c = c / 255.0f;
-				x = TPos[i + j].x;	y = TPos[i + j].y; 	z = TPos[i + j].z;
+	for ( i = 0; i < Red.size(); i++) { //for each pixel (or from 0 to 2PI)
+			
+		for ( k = 0; k < 3; k++) { //for each color
+			float c = (float)colors[k]->at(i); //convert color from RGBA
+			c = c / 255.0f;
+			x = TPos[i].x;	y = TPos[i].y; 	z = TPos[i].z;
+				
 
-				//left right
-				if (j < s * 2) {
-					if (i > 255) continue;
-					formfactor = abs(y) * pixelarea / (3.141592 * pow(pow(z, 2) + pow(y, 2) + 1, 2));
-					sumofformfactors += formfactor;
-					theta = acos(abs(y) * pixelarea / sqrt(pow(z, 2) + pow(y, 2) + 1));
-				}
-				//top bottom
-				else if (j >= s * 2 && j < s * 4) { //if this is the top and bottom textures, do this:
-					formfactor = (pixelarea / (3.141592 * pow(pow(x, 2) + pow(z, 2) + 1, 2)));
-					sumofformfactors += formfactor;
-					theta = acos(pixelarea / sqrt(pow(x, 2) + pow(z, 2) + 1));
-				}
-				//back front
-				else
-				{
-					if (i > 255) continue;
-					formfactor = abs(y) * pixelarea / (3.141592 * pow(pow(x, 2) + pow(y, 2) + 1, 2));
-					sumofformfactors += formfactor;
-					theta = acos(abs(y) * pixelarea / sqrt(pow(x, 2) + pow(y, 2) + 1));
-				}
-
-				Llm00[k] += c * (0.282095) * sin(theta) * formfactor;
-				//cout << c * ( 0.282095) * sin(theta) * formfactor << endl;
-				Llm11[k] += c * (0.488603 * x) * sin(theta) * formfactor;
-				Llm10[k] += c * (0.488603 * y) * sin(theta) * formfactor;
-				Llm1_1[k] += c * (0.488603 * z) * sin(theta) * formfactor;
-				Llm21[k] += c * (1.092548 * x * z) * sin(theta) * formfactor;
-				Llm2_1[k] += c * (1.092548 * y * z) * sin(theta) * formfactor;
-				Llm2_2[k] += c * (1.092548 * x * y) * sin(theta) * formfactor;
-				Llm20[k] += c * (0.315392 * (3 * pow(z, 2) - 1)) * sin(theta) * formfactor;
-				Llm22[k] += c * (0.546274 * (pow(x, 2) * pow(y, 2))) * sin(theta) * formfactor;
-
+			if(i < s * 2) {
+				formfactor = abs(y) * pixelarea / (3.141592 * pow(pow(z, 2) + pow(y, 2) + 1, 2));
+				sumofformfactors += formfactor;
+				theta = acos(abs(y) * pixelarea / sqrt(pow(z, 2) + pow(y, 2) + 1));
 			}
+			else if (i >= s * 2 && i < s * 4) { //if this is the top and bottom textures, do this:
+				formfactor = (pixelarea / (3.141592 * pow(pow(x, 2) + pow(z, 2) + 1, 2)));
+				sumofformfactors += formfactor;
+				theta = acos(pixelarea / sqrt(pow(x, 2) + pow(z, 2) + 1) );
+			}
+			else
+			{
+				formfactor = abs(y) * pixelarea / (3.141592 * pow(pow(x, 2) + pow(y, 2) + 1, 2));
+				sumofformfactors += formfactor;
+				theta = acos(abs(y) * pixelarea / sqrt(pow(x, 2) + pow(y, 2) + 1) );
+			}
+				
+			Llm00[k] += c * ( 0.282095) * sin(theta) * formfactor;
+			//cout << c * ( 0.282095) * sin(theta) * formfactor << endl;
+			Llm11[k] += c * (0.488603 * x) * sin(theta) * formfactor;
+			Llm10[k] += c * (0.488603 * y) * sin(theta) * formfactor;
+			Llm1_1[k] += c * (0.488603 * z) * sin(theta) * formfactor;
+			Llm21[k] += c * (1.092548 * x * y) * sin(theta) * formfactor;
+			Llm2_1[k] += c * (1.092548 * z * y) * sin(theta) * formfactor;
+			Llm2_2[k] += c * (1.092548 * x * z) * sin(theta) * formfactor;
+			Llm20[k] += c * (0.315392 * (3 * pow(y, 2) - 1)) * sin(theta) * formfactor;
+			Llm22[k] += c * (0.546274 * (pow(x, 2) - pow(z, 2))) * sin(theta) * formfactor;
+				
 		}
 	}
 
@@ -243,32 +238,3 @@ void DGI::add_coefficient(int l, int m) {
 double DGI::get_coefficient(int l, int m, int color) {
 	return Llm[color]->at(l).at(m);
 }
-
-/*
-void DGI::getside(int S, glm::vec3& start_corner, char& dimension_one, char& dimension_two) {
-	switch (S) {
-	case right:
-		start_corner = glm::vec3(3.0f, 3.0f, -3.0f);
-		dimension_one = 'z';
-		dimension_two = 'y';
-		break;
-	case left:
-
-		break;
-	case top:
-
-		break;
-	case bottom:
-
-		break;
-	case front:
-
-		break;
-	case back:
-
-		break;
-	default:
-		cout << "the end" << endl;
-	}
-
-}*/
