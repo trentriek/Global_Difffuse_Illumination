@@ -8,12 +8,14 @@ class DGI {
 public:
 	DGI();
 	virtual ~DGI();
-	virtual void calculateCoefficients(); //Llm
+	virtual void calculateCoefficients(double pixelsamount); //Llm
 	double get_coefficient(int l, int m, int Color); //we reference a coeffiecient based on spherical harmonic level (l) and index (m) 
 	void add_coefficient(int l, int m);
 	void getrgbvalues(unsigned char* data, int w, int h);
 	void setupsides(int w, int h);
-	float skyboxsize = 1.0f;
+
+	void sample_coefficients_1();
+
 private:
 	
 

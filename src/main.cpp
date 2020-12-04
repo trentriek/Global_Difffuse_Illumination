@@ -216,11 +216,19 @@ static void init()
 	Tprog->addAttribute("aPos");
 	Tprog->addAttribute("aNor");
 	Tprog->addUniform("lightPos");
+	Tprog->addUniform("lightInt");
 	Tprog->addUniform("lightPos2");
+	Tprog->addUniform("lightInt2");
 	Tprog->addUniform("E_R");
 	Tprog->addUniform("E_G");
 	Tprog->addUniform("E_B");
+	Tprog->addUniform("ka");
+	Tprog->addUniform("kd");
+	Tprog->addUniform("ks");
+	Tprog->addUniform("s");
 	Tprog->setVerbose(false);
+
+
 	//shader 3
 	SBprog = make_shared<Program>();
 	SBprog->setShaderNames(RESOURCE_DIR + "sbvert.glsl", RESOURCE_DIR + "sbfrag.glsl");
@@ -239,7 +247,7 @@ static void init()
 	
 	//load mesh
 	shape = make_shared<Shape>();
-	shape->loadMesh(RESOURCE_DIR + "bunny.obj");
+	shape->loadMesh(RESOURCE_DIR + "teapot.obj");
 	shape->fitToUnitBox();
 	shape->init();
 	
@@ -265,6 +273,9 @@ static void init()
 	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox3/");
 	skybox->prog = SBprog;
 	skybox->init(&Irradiance); //we pass in the Irradiance class so that we can pass in the color infomration of the skybox as its being read in.
+
+	//this is for testing - manutally setting the coefficients
+	//Irradiance.sample_coefficients_1();
 
 	get_MatrixCoeffeicients(Global_R, Global_G, Global_B, &Irradiance);
 
@@ -345,16 +356,13 @@ static void render()
 		glUniformMatrix4fv(Tprog->getUniform("E_R"), 1, GL_FALSE, glm::value_ptr(Global_R));
 		glUniformMatrix4fv(Tprog->getUniform("E_G"), 1, GL_FALSE, glm::value_ptr(Global_G));
 		glUniformMatrix4fv(Tprog->getUniform("E_B"), 1, GL_FALSE, glm::value_ptr(Global_B));
-		//glUniform3f(Tprog->getUniform("lightPos"), L1.LightPos.x, L1.LightPos.y, L1.LightPos.z);
-		//glUniform3f(Tprog->getUniform("lightPos2"), L2.LightPos.x, L2.LightPos.y, L2.LightPos.z);
-		
 		//set light
 		L1.SetShaderLight(Tprog);
 		L2.SetShaderLight(Tprog);
 		//set material
 		M1.SetShaderToMat(Tprog);
-
 		shape->draw(Tprog);
+
 		//draw object 2
 		MV->multMatrix(shape2->Transform.topMatrix());
 		glUniformMatrix4fv(Tprog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
@@ -454,7 +462,7 @@ void get_MatrixCoeffeicients(glm::mat4x4& R, glm::mat4x4& G, glm::mat4x4& B, DGI
 	double c3 = 0.743125;
 	double c4 = 0.886227;
 	double c5 = 0.247708;
-
+	
 	R[0][0] = c1 * ir->get_coefficient(2, 2, 0);
 	R[0][1] = c1 * ir->get_coefficient(2, -2, 0);
 	R[0][2] = c1 * ir->get_coefficient(2, 1, 0);
@@ -471,6 +479,7 @@ void get_MatrixCoeffeicients(glm::mat4x4& R, glm::mat4x4& G, glm::mat4x4& B, DGI
 	R[3][1] = c2 * ir->get_coefficient(1, -1, 0);
 	R[3][2] = c2 * ir->get_coefficient(1, 0, 0);
 	R[3][3] = ( c4 * ir->get_coefficient(0, 0, 0) ) - (c5 * ir->get_coefficient(2, 0, 0));
+	cout << R[3][3];
 
 	G[0][0] = c1 * ir->get_coefficient(2, 2, 1);
 	G[0][1] = c1 * ir->get_coefficient(2, -2, 1);
@@ -488,6 +497,7 @@ void get_MatrixCoeffeicients(glm::mat4x4& R, glm::mat4x4& G, glm::mat4x4& B, DGI
 	G[3][1] = c2 * ir->get_coefficient(1, -1, 1);
 	G[3][2] = c2 * ir->get_coefficient(1, 0, 1);
 	G[3][3] = (c4 * ir->get_coefficient(0, 0, 1)) - (c5 * ir->get_coefficient(2, 0, 1));
+	cout << G[3][3];
 
 	B[0][0] = c1 * ir->get_coefficient(2, 2, 2);
 	B[0][1] = c1 * ir->get_coefficient(2, -2, 2);
@@ -505,5 +515,5 @@ void get_MatrixCoeffeicients(glm::mat4x4& R, glm::mat4x4& G, glm::mat4x4& B, DGI
 	B[3][1] = c2 * ir->get_coefficient(1, -1, 2);
 	B[3][2] = c2 * ir->get_coefficient(1, 0, 2);
 	B[3][3] = (c4 * ir->get_coefficient(0, 0, 2)) - (c5 * ir->get_coefficient(2, 0, 2));
-
+	cout << B[3][3];
 }

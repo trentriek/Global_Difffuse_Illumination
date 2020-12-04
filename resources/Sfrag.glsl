@@ -20,7 +20,7 @@ void main()
 	Ambiant = vec4(normal, 1.0) * E_B;
 	color.z = dot(Ambiant,vec4(normal, 1.0));
 
-	//color.x = color.x * 5.0; color.y = color.y * 5.0; color.z = color.z * 5.0;
+	//color.x = color.x * 0.1; color.y = color.y * 0.1; color.z = color.z * 0.1;
 
-	gl_FragColor = vec4(color.z, color.y, color.z, 1.0);
+	gl_FragColor = vec4(color.x, color.y, color.z, 1.0);
 }
