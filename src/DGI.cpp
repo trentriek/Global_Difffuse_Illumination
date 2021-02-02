@@ -171,7 +171,7 @@ void DGI::calculateCoefficients(double pixelsamount) {
 
 			float c = (float)colors[k]->at(i); //convert color from RGBA
 			c = c / 255.0f;
-			x = TPos[i].x;	y = TPos[i].z; 	z = TPos[i].y;
+			x = TPos[i].x;	y = TPos[i].y; 	z = TPos[i].z;
 			//cout << "color is " << k << ", value is: " << c  << ", position is: " << x << ", " << y << ", " << z << endl;
 
 			if(i < s * 2) {
@@ -190,7 +190,8 @@ void DGI::calculateCoefficients(double pixelsamount) {
 				sumofformfactors += formfactor;
 				theta = acos(abs(y) / sqrt(pow(x, 2) + pow(y, 2) + 1) );
 			}
-			formfactor = 3.8e-06;
+			formfactor *= 3.141592;
+			//formfactor = 3.8e-06;
 
 			
 			Llm00[k] += (c * ( 0.282095) * sin(theta) * formfactor);
@@ -272,34 +273,34 @@ double DGI::get_coefficient(int l, int m, int color) {
 
 void DGI::sample_coefficients_1() {
 	Llm[0]->at(0).at(0) = 0.0;
-	Llm[0]->at(1).at(1) = 0.43;
+	Llm[0]->at(1).at(1) = 0.0;
 	Llm[0]->at(1).at(0) = 0.0;
 	Llm[0]->at(1).at(-1) = 0.0;
 	Llm[0]->at(2).at(1) = 0.0;
-	Llm[0]->at(2).at(-1) = 0.6;
+	Llm[0]->at(2).at(-1) = 0.0;
 	Llm[0]->at(2).at(-2) = 0.0;
-	Llm[0]->at(2).at(0) = 0.7;
-	Llm[0]->at(2).at(2) = 0.07;
+	Llm[0]->at(2).at(0) = 0.0;
+	Llm[0]->at(2).at(2) = 1.0;
 
 	Llm[1]->at(0).at(0) = 0.0;
-	Llm[1]->at(1).at(1) = -0.43;
+	Llm[1]->at(1).at(1) = 0.0;
 	Llm[1]->at(1).at(0) = 0.0;
 	Llm[1]->at(1).at(-1) = 0.0;
 	Llm[1]->at(2).at(1) = 0.0;
 	Llm[1]->at(2).at(-1) = 0.0;
 	Llm[1]->at(2).at(-2) = 0.0;
-	Llm[1]->at(2).at(0) = 0.8;
-	Llm[1]->at(2).at(2) = 0.0;
+	Llm[1]->at(2).at(0) = 0.0;
+	Llm[1]->at(2).at(2) = -1.0;
 
 	Llm[2]->at(0).at(0) = 0.0;
 	Llm[2]->at(1).at(1) = 0.0;
 	Llm[2]->at(1).at(0) = 0.0;
 	Llm[2]->at(1).at(-1) = 0.0;
 	Llm[2]->at(2).at(1) = 0.0 ;
-	Llm[2]->at(2).at(-1) = -0.6;
-	Llm[2]->at(2).at(-2) = -0.7;
+	Llm[2]->at(2).at(-1) = 0.0;
+	Llm[2]->at(2).at(-2) = 0.0;
 	Llm[2]->at(2).at(0) = 0.0;
-	Llm[2]->at(2).at(2) = -0.07;
+	Llm[2]->at(2).at(2) = 0.0;
 }
 
 /*

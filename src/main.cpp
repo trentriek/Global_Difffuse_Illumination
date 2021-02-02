@@ -39,7 +39,9 @@ shared_ptr<Shape> shape2;
 //Global Illumination additions:
 shared_ptr<SkyBox> skybox;
 DGI Irradiance;
-glm::mat4x4 Global_R; glm::mat4x4 Global_G; glm::mat4x4 Global_B;
+glm::mat4x4 Global_R;
+glm::mat4x4 Global_G; 
+glm::mat4x4 Global_B;
 void get_MatrixCoeffeicients(glm::mat4x4& R, glm::mat4x4& G, glm::mat4x4& B, DGI* ir);
 
 const int numofMats = 3;
@@ -247,7 +249,7 @@ static void init()
 	
 	//load mesh
 	shape = make_shared<Shape>();
-	shape->loadMesh(RESOURCE_DIR + "teapot.obj");
+	shape->loadMesh(RESOURCE_DIR + "bunny.obj");
 	shape->fitToUnitBox();
 	shape->init();
 	
@@ -270,7 +272,7 @@ static void init()
 	Irradiance.add_coefficient(2, 2);
 
 
-	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox3/");
+	skybox = make_shared<SkyBox>(RESOURCE_DIR + "skybox/");
 	skybox->prog = SBprog;
 	skybox->init(&Irradiance); //we pass in the Irradiance class so that we can pass in the color infomration of the skybox as its being read in.
 
